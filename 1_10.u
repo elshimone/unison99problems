@@ -1,0 +1,134 @@
+--1
+
+use .base
+
+myLastStr : Text -> Optional Char
+myLastStr str = myLast(Text.toCharList str)
+
+myLast : [a] -> Optional a
+myLast as = 
+    case List.unsnoc as of
+        Some ((_, a)) -> Some(a)
+        _ -> None
+
+use test.v1
+
+test> tests.myLast.empty = run (expect (myLast [] == None))
+test> tests.myLast.notEmpty = run (expect (myLast [1,2,3] == Some(3)))
+test> tests.myLast.notEmptyStr = run (expect (myLastStr "simon" == Some(?n)))
+
+--2
+
+myButLast : [a] -> Optional a
+myButLast as = 
+    case List.unsnoc as of
+        Some ((a +: xs, _)) -> Some(a) 
+        _ -> None
+
+test> tests.myButLast.empty = run (expect (myButLast [] == None))
+test> tests.myButLast.one = run (expect (myButLast [1] == None))
+test> tests.myButLast.two = run (expect (myButLast [1,2] == Some(1)))
+
+--3
+
+myElementAt : Nat -> [a] -> Optional a
+myElementAt i as =
+    case List.uncons(as) of
+        Some(a, xs) -> 
+            if i == 0 then Some(a) else myElementAt (i `drop` 1) xs
+        _ -> None
+
+test> tests.myElementAt.empty = run (expect (myElementAt 0 [] == None))
+test> tests.myElementAt.inRangeZero = run (expect (myElementAt 0 [1,2,3] == Some(1)))
+test> tests.myElementAt.inRangeOne = run (expect (myElementAt 1 [1,2,3] == Some(2)))
+test> tests.myElementAt.inRangeTwo = run (expect (myElementAt 2 [1,2,3] == Some(3)))
+test> tests.myElementAt.outRange = run (expect (myElementAt 3 [1,2,3] == None))
+
+
+--4
+
+myLength : [a] -> Nat
+myLength as =
+    case List.uncons(as) of
+        Some(_, xs) -> 
+            1 + myLength xs
+        _ -> 0
+
+test> tests.myLength.empty = run (expect (myLength [] == 0))
+test> tests.myLength.one = run (expect (myLength [1] == 1))
+test> tests.myLength.two = run (expect (myLength [1,3] == 2))
+
+--5
+
+myReverse : [a] -> [a]
+myReverse as =
+    foldl (x->y->y +: x) [] as
+
+
+test> tests.myReverse.empty = run (expect (myReverse [] == []))
+test> tests.myReverse.nonempty = run (expect (myReverse [1,2,3] == [3,2,1]))
+
+--6
+isPalindrome : [a] -> Boolean
+isPalindrome as = as == myReverse as
+
+test> tests.isPalindrome.empty = run (expect (isPalindrome [] == true))
+test> tests.isNotPalindrome = run (expect (isPalindrome [1,2,3] == false))
+test> tests.isPalindrome = run (expect (isPalindrome [1,2,1] == true))
+
+--7
+
+type Nested a = Element a | List[Nested a]
+use Nested List Element
+
+myFlatten: Nested a -> [a]
+myFlatten as = case as of
+    Element a -> [a]
+    List (l +: ls) -> myFlatten(l) ++ myFlatten(Nested.List ls)
+    List [] -> []
+
+
+>tests.myFlattenFlat = run (expect (myFlatten(List[Element 5]) == [5]))
+>tests.myFlattenNested = run (expect (myFlatten(List[Element 1,Element 2,List[Element 3, Element 4],Element 5]) == [1,2,3,4,5]))
+
+--8 
+
+compress: [a] -> [a]
+
+compress as = reverse (foldl (xs -> x -> 
+    case xs of
+        [] -> [x]
+        (xx +: _) | not(x == xx) -> x +: xs
+        _ -> xs) [] as )
+use test.v1
+
+test> tests.compressEmpty =  run (expect (compress([]) == []))
+test> tests.compressDups =  run (expect (compress([1,1,2,2,3]) == [1,2,3]))
+
+--9
+
+pack: [a] ->  [[a]]
+pack ass =  
+    reverse (foldl (xs -> x -> 
+        case xs of
+            [] -> [[x]]
+            ((l +: ls) +: lls) -> if (x == l) then (x +: (l +: ls)) +: lls else [x] +: xs 
+            ) [] ass )
+
+use test.v1
+
+test> tests.packEmpty = run ( expect (pack([]) == []))
+test> tests.packDups = run ( expect (pack([1,2,2,3,3,3,4]) == [[1],[2,2], [3,3,3], [4]] ))
+
+-- 10
+
+encode: [a] ->  [(Nat,a)]
+encode ass = map (x -> case x of (l +: _) -> (size x, l)) (pack ass)
+        
+        
+test> tests.encodeEmpty = run ( expect (encode([]) == []))
+test> tests.encodeDups = run ( expect (encode([1,2,2,3,3,3,4]) == [(1,1),(2,2), (3,3), (1,4)] ))
+
+----
+
+
