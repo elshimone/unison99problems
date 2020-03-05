@@ -1,0 +1,26 @@
+
+-- 21
+
+insertn: a -> [a] -> Nat -> [a]
+insertn b as n = if n >= size as 
+    then
+        as ++ [b]
+    else
+        l = drop n 1
+        take l as ++ [b] ++ drop l as
+
+
+test>tests.insertn = run (expect (insertn 5 [1,2,3,4,5,6] 2 == ([1,5,2,3,4,5,6]) ))
+test>tests.insertnHead = run (expect (insertn 5 [1,2,3,4,5,6] 0 == ([5,1,2,3,4,5,6]) ))
+test>tests.insertnOOB = run (expect (insertn 5 [1,2,3,4,5,6] 99 == ([1,2,3,4,5,6,5]) ))
+
+--22
+
+rangen: Nat -> Nat -> [Nat]
+rangen n m =
+    go x y as = if (x > y) then as else as ++ [x] ++ go (x + 1) y as
+    if n < m then go n m [] else reverse (go m n [])
+
+test>tests.rangen = run (expect (rangen 2 5 == ([2,3,4,5]) ))
+test>tests.rangenSame = run (expect (rangen 2 2 == ([2]) ))
+test>tests.rangenLess = run (expect (rangen 5 1 == ([5,4,3,2,1]) ))
