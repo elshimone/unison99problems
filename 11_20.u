@@ -1,0 +1,53 @@
+--11 Bored with RLE for now
+
+--12 Bored with RLE for now
+
+--13 Bored with RLE for now
+
+--14
+
+dupli: [a] -> [a]
+dupli as = List.foldb (x -> [x,x]) (++) [] as
+
+use test.v1
+
+test>tests.duplicateList = run (expect (dupli [1,2,3] == [1,1,2,2,3,3]))
+
+--15
+
+repli: [a] -> base.Nat -> [a]
+repli as n = 
+    expand x n = map (_ -> x) (List.range 0 n)
+    List.foldb (x -> expand x n) (++) [] as
+
+test>tests.replicateList = run (expect (repli [1,2,3] 3 == [1,1,1,2,2,2,3,3,3]))
+
+--16
+
+dropn: [a] -> Nat -> [a]
+dropn as n = 
+    go i =
+        case List.at i as of
+            None -> []
+            Some x -> 
+                (if ((i + 1) `mod` n == 0) then [] else [x] ) ++ go (i + 1)
+    go 0
+
+test>tests.dropn = run (expect (dropn [1,2,3,4,5,6] 2 == [1,3,5]))
+
+-- 17
+
+splitn: [a] -> Nat -> ([a], [a])
+splitn as n = (List.take n as, List.drop n as)
+
+test>tests.splitn = run (expect (splitn [1,2,3,4,5,6] 2 == ([1,2], [3,4,5,6]) ))
+
+-- 18 
+
+slicen: [a] -> Nat -> Nat -> [a]
+slicen as n m = 
+    List.drop n (List.take (m + 1) as) 
+
+test>tests.slicen = run (expect (slicen [1,2,3,4,5,6] 2 4 == [3,4,5] ))
+
+----
